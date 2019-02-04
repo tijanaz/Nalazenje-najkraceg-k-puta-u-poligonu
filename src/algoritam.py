@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from shapely.geometry import Polygon, Point, LineString
 
+#kod je preuzet sa interneta
 def generatePolygon( ctrX, ctrY, aveRadius, irregularity, spikeyness, numVerts ):
     irregularity = clip( irregularity, 0,1 ) * 2*math.pi / numVerts
     spikeyness = clip( spikeyness, 0,1 ) * aveRadius
