@@ -18,12 +18,11 @@ def GeneticAlgorithm(k, A, B, polygon_points):
     # parametri
     reproduction_size = 300
     generation_size = 1000
-    init_generation_size = 5000
     mutation_rate = 0.03
     max_iteration = 15
     tournament_k = 20
     crossover_p = 0.5
-    crossover_p_mix = 0.2
+    crossover_p_mix = 0.3
 
     solution_size = k-2         # A i B su fiksni, trazimo ostale tacke
 
@@ -170,14 +169,14 @@ def GeneticAlgorithm(k, A, B, polygon_points):
             if p1 < crossover_p:
                 ab[i] = a[i]
                 ba[i] = b[i]
-                # Ako je vrednost p2 manja od crossover_p mesaju se i x i y koordinate, a ne samo cele tacke
-                if p2 < crossover_p:
+                # Ako je vrednost p2 manja od crossover_p_mix mesaju se i x i y koordinate, a ne samo cele tacke
+                if p2 < crossover_p_mix:
                     ab[i] = (b[i][0], ab[i][1])
                     ba[i] = (a[i][0], ba[i][1])
             else:
                 ab[i] = b[i]
                 ba[i] = a[i]
-                if p2 < crossover_p:
+                if p2 < crossover_p_mix:
                     ab[i] = (ab[i][0], a[i][1])
                     ba[i] = (ba[i][0], b[i][1])
                 # temena su cesto uokviru najboljeg resenja pa ih malo cesce biramo
@@ -247,7 +246,7 @@ def GeneticAlgorithm(k, A, B, polygon_points):
             number_last_same = 0
             last_unfit = top_unfit.unfitness
         # ako u poslednjih 20 iteracija nema promene prekida se algoritam
-        if number_last_same > 20:
+        if number_last_same > 5:
             # prikazuje se rezultat i vraca se najbolje resenje
             top_solution = min(solutions, key=lambda chromo: chromo.unfitness)
             print("Broj preseka: ")
