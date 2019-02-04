@@ -201,6 +201,15 @@ def GeneticAlgorithm(k, A, B, polygon_points):
 
     ################################### Glavni deo algoritma #################################################
 
+    # ako se linija AB nalazi unutar poligona vraca se AB (od k tacaka)
+    if num_intersection([A, B]) == 0:
+        res_dots = []
+        dist_x = 1.0*(B[0] - A[0])/(k-1)
+        dist_y = 1.0*(B[1] - A[1])/(k-1)
+        for i in range(k-2):
+            res_dots.append( (A[0]+dist_x*(i+1), A[1]+dist_y*(i+1)) )
+        return res_dots
+
     # Generise se pocetna populaciju jedinki (resenja) i racuna se prilagodjenost svake jedinke u populaciji
     solutions = initial_population()
 
@@ -230,6 +239,20 @@ def GeneticAlgorithm(k, A, B, polygon_points):
         # Primenom operatora ukrstanja i mutacije kreiraju se nove jedinke i racuna se njihova prilagodjenost.
         # Dobijene jedinke predstavljaju novu generaciju.
         solutions = create_generation(for_reproduction)
+
+        # azurira se broj poslednjih iteracija u kojima nije doslo do promene
+        if last_unfit == top_unfit.unfitness:
+            number_last_same += 1
+        else:
+            number_last_same = 0
+            last_unfit = top_unfit.unfitness
+        # ako u poslednjih 20 iteracija nema promene prekida se algoritam
+        if number_last_same > 20:
+            # prikazuje se rezultat i vraca se najbolje resenje
+            top_solution = min(solutions, key=lambda chromo: chromo.unfitness)
+            print("Broj preseka: ")
+            print(num_intersection(top_solution.points))
+            return top_solution
 
         # Prelazak u sledecu iteraciju
         current_iteration += 1

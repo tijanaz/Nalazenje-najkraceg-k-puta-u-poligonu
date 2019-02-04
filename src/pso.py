@@ -6,26 +6,31 @@ from shapely.geometry import Polygon, Point, LineString, MultiLineString, Geomet
 
 def PSO(k, A, B, polygon_points):
 
-    num_dimensions = (k-2)*2
+    solution_dim = (k-2)*2
+
+    # parametri
     num_particles = 150
-    maxiter = 200
-    err_best_g = -1                   # best error for group
-    pos_best_g = []                   # best position for group
+    max_iteration = 200
+    velocity_par = 70
+
+    err_best_g = -1                   # najbolja greska za grupu
+    pos_best_g = []                   # najbolje pozicija za grupu
 
     # pocetne tacke se biraju na liniji AB u jednakim razmacima
     dist_x = 1.0*(B[0] - A[0])/(k-1)
     dist_y = 1.0*(B[1] - A[1])/(k-1)
 
-    x0 = []
+    inital_dots = []
     for i in range(k-2):
-        x0.append(A[0]+dist_x*(i+1))
-        x0.append(A[1]+dist_y*(i+1))
+        inital_dots.append(A[0]+dist_x*(i+1))
+        inital_dots.append(A[1]+dist_y*(i+1))
 
     p = Polygon(polygon_points);
 
     # Vrednosti izmedju kojih se nalaze tacke poligona
     (min_x, min_y, max_x, max_y) = p.bounds
-    # input bounds
+
+    # donje i gornje granice
     bounds=[]
     for i in range(k-2):
         bounds.extend([(min_x, max_x),(min_y,max_y)])
@@ -63,7 +68,8 @@ def PSO(k, A, B, polygon_points):
 
 
 
-    # function we are attempting to optimize (minimize)
+    # funkcija koju pokusavamo da minimizujemo
+    # vraca duzinu puta + dodatne vrednosti ako put nije ceo u poligonu
     def func1(solution):
         total=0
 
@@ -71,8 +77,9 @@ def PSO(k, A, B, polygon_points):
 
         coord = [A]
         for point in zipped:
-            if not p.contains(Point(point[0], point[1])):
-                return num_dimensions*400
+            # ako je neka tacka van poligona, resenje je lose
+            if not Polygon(polygon_points).contains(Point(point[0], point[1])):
+                return solution_dim*400
             coord.append(point)
         coord.append(B)
         # formira se linija
@@ -87,96 +94,106 @@ def PSO(k, A, B, polygon_points):
 
     ##############################################################
 
+    # Klasa predstavlja cesticu (resenje)
     class Particle:
-        def __init__(self, x0):
-            self.position_i=[]          # particle position
-            self.velocity_i=[]          # particle velocity
-            self.pos_best_i=[]          # best position individual
-            self.err_best_i=-1          # best error individual
-            self.err_i=-1               # error individual
+        def __init__(self, inital_dots):
+            self.position_i = []          # pozicija cestice
+            self.velocity_i = []          # brzina cestice
+            self.pos_best_i = []          # najbolja pozicija
+            self.err_best_i = -1          # najbolja greska
+            self.err_i      = -1          # pojedinacna greska
 
-            for i in range(0, num_dimensions):
-                self.velocity_i.append(random.uniform(-50, 50))
-                self.position_i.append(x0[i])
+            for i in range(0, solution_dim):
+                # pocetne brzine se biraju nasumicno
+                self.velocity_i.append(random.uniform(-velocity_par, velocity_par))
+                self.position_i.append(inital_dots[i])
 
-        # evaluate current fitness
-        def evaluate(self,costFunc):
+        # izracunati trenutnu prilagodjenost
+        def evaluate(self, costFunc):
             self.err_i = costFunc(self.position_i)
 
-            # check to see if the current position is an individual best
-            if self.err_i < self.err_best_i or self.err_best_i==-1:
-                self.pos_best_i=self.position_i
-                self.err_best_i=self.err_i
+            # proveriti da li je trenutna pozicija najbolja pozicija
+            if self.err_i < self.err_best_i or self.err_best_i == -1:
+
+                self.pos_best_i = self.position_i
+                self.err_best_i = self.err_i
 
 
-        # update new particle velocity
+        # azuriranje brzine cestice
         def update_velocity(self,pos_best_g):
-            w  = 0.5       # constant inertia weight (how much to weigh the previous velocity)
-            c1 = 1         # cognative constant
-            c2 = 2         # social constant
+            w  = 0.5       # koliko utice prethodna brzina
+            c1 = 1
+            c2 = 2
 
-            for i in range(0,num_dimensions):
-                r1=random.random()
-                r2=random.random()
+            for i in range(0,solution_dim):
+                r1 = random.random()
+                r2 = random.random()
 
                 vel_cognitive = c1 * r1 * (self.pos_best_i[i] - self.position_i[i])
-                vel_social =    c2 * r2 * (pos_best_g[i] - self.position_i[i])
+                vel_social    = c2 * r2 * (pos_best_g[i] - self.position_i[i])
+
                 self.velocity_i[i] = w * self.velocity_i[i] + vel_cognitive + vel_social
 
-        # update the particle position based off new velocity updates
-        def update_position(self,bounds):
-            for i in range(0,num_dimensions):
+        # azuriranje pozicije cestice na osnovu azurirane brzine
+        def update_position(self, bounds):
+            for i in range(0, solution_dim):
                 self.position_i[i]=self.position_i[i]+self.velocity_i[i]
 
-                # adjust maximum position if necessary
+                # ako je neophodno prilagoditi do maksimalne pozicije
                 if self.position_i[i] > bounds[i][1]:
                     self.position_i[i] = bounds[i][1]
 
-                # adjust minimum position if neseccary
+                # ako je neophodno prilagoditi do minimalne pozicije
                 if self.position_i[i] < bounds[i][0]:
                     self.position_i[i]=bounds[i][0]
 
     #######################################################
+
+
     # ako se linija AB nalazi unutar poligona vraca se AB (od k tacaka)
     if num_intersection([A, B]) == 0:
-        return x0
+        return inital_dots
 
-    # establish the swarm
-    swarm=[]
+    # uspostavlja se roj
+    swarm = []
     for i in range(0, num_particles):
-        swarm.append(Particle(x0))
+        swarm.append(Particle(inital_dots))
 
-    # begin optimization loop
+    # glavni deo algoritma
     i=0
+    # promenjive za pracenje u koliko poslednjih iteracija nije bilo promene
     number_last_same = 0
     last_err_best_g = -1
 
-    while i < maxiter:
+    while i < max_iteration:
 
+        # prikaz stanja
         print i
         print pos_best_g
         print err_best_g
         print "-------------------------------------------------"
 
-        # cycle through particles in swarm and evaluate fitness
+        # obilazak cestica u roju i azuriranje prilagodjenosti
         for j in range(0, num_particles):
             swarm[j].evaluate(func1)
 
-            # determine if current particle is the best (globally)
+            # utvrdjuje se da li je trenutna cestica i najbolja
             if swarm[j].err_i < err_best_g or err_best_g == -1:
                 pos_best_g = list (swarm[j].position_i)
                 err_best_g = float(swarm[j].err_i)
 
-        # cycle through swarm and update velocities and position
+        # obilazak cestica u roju i azuriranje brzina i pozicija
         for j in range(0,num_particles):
             swarm[j].update_velocity(pos_best_g)
             swarm[j].update_position(bounds)
 
-        #
+        # azurira se broj poslednjih iteracija u kojima nije doslo do promene
         if err_best_g == last_err_best_g:
             number_last_same += 1
         else:
             number_last_same = 0
+            last_err_best_g = err_best_g
+
         # ako u poslednjih 20 iteracija nema promene prekida se algoritam
         if number_last_same > 20:
             # prikazuje se rezultat i vraca se najbolje resenje
@@ -208,17 +225,17 @@ if __name__ == "__main__":
           (267, 225), (319, 125), (278, 160), (223, 130), (262, 192),
           (210,220), (150, 201), (143,197)]
     #1.
-    #A = (160, 321)
-    #B = (234, 144)
-    
+    A = (160, 321)
+    B = (234, 144)
+
     #2.
     #A = (362.55631868,  220.7947158)
     #B = (260.32511082,  151.84525141)
-    
+
     #3.
-    A = (221.70344421,  230.73104356)
-    B = (159.60986738,  323.70420134)
-    
+    #A = (221.70344421,  230.73104356)
+    #B = (159.60986738,  323.70420134)
+
     res = PSO(6, A, B, polygon_points)
 
     res = zip(res[0::2], res[1::2])
