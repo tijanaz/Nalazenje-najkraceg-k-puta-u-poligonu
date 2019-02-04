@@ -220,8 +220,8 @@ def GeneticAlgorithm(k, A, B, polygon_points):
         the_sum = sum(solution.unfitness for solution in solutions)
         print("Reproduction chromos sum unfitness: %d" % the_sum)
 
-        top_unfit = min(solutions, key=lambda s: s.unfitness).unfitness
-        print("Top solution: %f" % top_unfit)
+        top_unfit = min(solutions, key=lambda s: s.unfitness)
+        print("Top solution: %f" % top_unfit.unfitness)
         print("----------------------------------------------------------")
 
         # Bira se skup jedinki za reprodukciju iz populacije
@@ -230,18 +230,6 @@ def GeneticAlgorithm(k, A, B, polygon_points):
         # Primenom operatora ukrstanja i mutacije kreiraju se nove jedinke i racuna se njihova prilagodjenost.
         # Dobijene jedinke predstavljaju novu generaciju.
         solutions = create_generation(for_reproduction)
-
-        if top_unfit == last_unfit:
-            number_last_same += 1
-        else:
-            number_last_same = 0
-        # ako u poslednjih 20 iteracija nema promene prekida se algoritam
-        if number_last_same > 40:
-            # prikazuje se rezultat i vraca se najbolje resenje
-            top_solution = min(solutions, key=lambda chromo: chromo.unfitness)
-            print("Broj preseka: ")
-            print(num_intersection(top_solution.points))
-            return top_solution
 
         # Prelazak u sledecu iteraciju
         current_iteration += 1
@@ -259,25 +247,13 @@ if __name__ == "__main__":
     random.seed()
 
     #zadat poligon
-    polygon_points = [(105, 194), (162, 242), (153, 264), (171, 276), (153, 310),
-          (142, 360), (193, 328),
-          (250, 248), (233, 326), (256, 343), (288, 378), (277, 307),
-          (331, 362), (329, 320), (339, 297), (328, 276), (340, 266),
-          (316, 245), (382, 226), (443, 222), (314, 210), (300, 195),
-          (267, 225), (319, 125), (278, 160), (223, 130), (262, 192),
-          (210,220), (150, 201), (143,197)]
-    #1.
-    #A = (160, 321)
-    #B = (234, 144)
-    
-    #2.
-    #A = (362.55631868,  220.7947158)
-    #B = (260.32511082,  151.84525141)
-    
-    #3.
-    A = (221.70344421,  230.73104356)
-    B = (159.60986738,  323.70420134)
-    
+    polygon_points = [(0, 10), (30, 40), (30, 10), (50, 30), (80, 0), (110, 30), (120, 0), (140, 20), (150, 10),
+                      (160, 50), (130, 30), (110, 60), (80, 30), (30, 70), (0, 60), (0, 10)]
+
+    # zadate tacke
+    A = (10, 30)
+    B = (150, 40)
+
     top_solution = GeneticAlgorithm(5, A, B, polygon_points)
     print("Solution: %s unfitness: %d" % (top_solution.points, top_solution.unfitness))
 
@@ -286,7 +262,7 @@ if __name__ == "__main__":
         coord.append(point)
     coord.append(B)
 
-
+    # iscrtavanje
     plt.figure()
     plt.plot([p[0] for p in coord], [p[1] for p in coord], c = 'r')
 
