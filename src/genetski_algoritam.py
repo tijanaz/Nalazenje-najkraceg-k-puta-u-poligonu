@@ -136,7 +136,7 @@ def GeneticAlgorithm(k, A, B, polygon_points):
         new_generation.append(min(solutions, key=lambda s: s.unfitness))
         # sve dok se ne popuni generacija
         while len(new_generation) < generation_size:
-            # Biramo dva nasumicno i vrsimo
+            # Biramo dva nasumicno i vrsimo ukrstanje
 
             parents = random.sample(for_reproduction, 2)
             child1, child2 = crossover_uniform(parents[0].points, parents[1].points)
