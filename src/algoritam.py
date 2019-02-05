@@ -363,12 +363,12 @@ p = Polygon(points)
 #point_B = Point(234, 144)
 
 #2.
-#point_A = Point(362.55631868,  220.7947158)
-#point_B = Point(260.32511082,  151.84525141)
+point_A = Point(362.55631868,  220.7947158)
+point_B = Point(260.32511082,  151.84525141)
 
 #3.
-point_A = Point(221.70344421,  230.73104356)
-point_B = Point(159.60986738,  323.70420134)
+#point_A = Point(221.70344421,  230.73104356)
+#point_B = Point(159.60986738,  323.70420134)
 
 n, m =p.exterior.coords.xy #n, m-koordinate temena poligona(tipa array)
 #point_A = get_random_point_in_polygon(p)
@@ -434,8 +434,8 @@ if max_k < k:
 
 print("Broj k duzi:")
 print(k)
-print("Duzina linije:")
-print(length)
+#print("Duzina linije:")
+#print(length)
 print("Konacna temena:")
 print(array_vertices_x)
 print(array_vertices_y)
